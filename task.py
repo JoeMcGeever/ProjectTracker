@@ -1,0 +1,1 @@
+#apply composite pattern here - where tasks can have mini tasks beneath it (related tasks)

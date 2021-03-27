@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+</head>
+   <body>
+   <br>
+   <div align="center">
+      <a href = "\staff">
+      <button style="height:75px;width:500px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
+            Staff Dashboard</button></a>
+      <form name="form1" action = "{{ url_for('register_manager') }}" method = "POST">
+         <br><br>
+         <h1>New Manager Profile</h1>
+         <br><br><br>
+         Username
+         <input type = "text" name = "username" /><br><br>
+         Email
+         <input type = "text" name = "email" /><br><br>
+         Start work year (yyyy)
+         <input type = "text" name = "start_year" /><br><br>
+         Bonus (£)
+         <input type = "text" name = "bonus" id="bonus" value="0.0" placeholder="0.0"/><br><br>
+         Profile type (video or text)
+         <input type = "text" name = "profile" /><br><br>
+         Project to assign
+         <input type = "text" name = "project" /><br><br>
+         Contract pay (£)
+         <input type = "text" name = "pay" id="pay" value="0.0" placeholder="0.0"/><br><br>
+         <input type = "submit" value = "register" />
+      </form>
+   </div>
+   </body>
+</html>

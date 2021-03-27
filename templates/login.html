@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+</head>
+<body>
+
+<figure class='login'>
+    <h1>Login</h1>
+    {% if error %}
+    <p class=error><strong>Error:</strong> {{ error }}
+    {% endif %}
+<form name="login" action = "{{ url_for('login') }}" method = "POST">
+	<p><label for="user">Username</label><br /><input type="text" name="user" placeholder="username" /></p>
+	<p><label for="pass">Password</label><br /><input type="password" name="pass" placeholder="password" /></p>
+	<p><button type="submit" id="login">Log in</button></p>
+</form>
+
+<a href = "\register">
+    <button type="submit" id="switch">Register</button>
+</a>
+
+</figure>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+</head>
+   <body>
+   <div align="center">
+   <br>
+      <a href = "\staff">
+      <button style="height:75px;width:500px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
+            Staff Dashboard</button></a>
+        <br><br>
+        <h1>Update Staff Profile</h1>
+      <form action = "{{ url_for('update') }}" method = "POST">
+         <br><br><br>
+          Username
+         <input type = "text" name = "username" /></br></br>
+          New Email
+         <input type = "text" name = "email" /></br></br>
+         <input type = "submit" value = "update" />
+      </form>
+    </div>
+   </body>
+</html>
