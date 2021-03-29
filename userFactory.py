@@ -10,7 +10,7 @@ class UserFactory:
     def __init__(self):  # a method to create objects
         self.user = None
 
-    def get_profile(self, the_type):  # GoF factory method pattern
+    def get_user(self, the_type):  # GoF factory method pattern
         if the_type is not None:
             if the_type.lower() == "manager":
                 self.user = Manager()

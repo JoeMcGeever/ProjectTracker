@@ -1,7 +1,11 @@
 """ This is the app"""
-from flask import Flask, flash, session, request, render_template, url_for
+from flask import Flask, session, request, render_template, url_for
 from flaskext.mysql import MySQL
 from werkzeug.utils import redirect
+from datetime import datetime
+
+from project import Project
+from userFactory import UserFactory
 
 mysql = MySQL()
 
@@ -16,26 +20,25 @@ app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
 
-
-
 @app.route('/login', methods=['GET', "POST"]) #gets the login page
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
         try:
             con = mysql.connect()  # set up database connection
             cur = con.cursor()
+            username = request.form['username']
+            password = request.form['password']
         except:
             con.rollback()
         finally:
-            cur.execute("SELECT role FROM user WHERE username=%s AND password=%s", (username, password))
+            cur.execute("SELECT role, userID FROM user WHERE username=%s AND password=%s", (username, password))
             rows = cur.fetchall()
             con.commit()
             con.close()
             if(len(rows)!=0):
-                session['username'] = username
+                session['projects'] = []
                 session['role'] = rows[0][0]
+                session['userID'] = rows[0][1]
                 return redirect(url_for('home'))  # route to home page
             else:
                 error = "Invalid login details"
@@ -45,25 +48,24 @@ def login():
 @app.route('/logout')
 def logout():
     # remove the username from the session if it's there
-    session.pop('username', None)
+    session.pop('userID', None)
+    session.pop('projects', None)
+    session.pop('role', None)
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', "POST"]) #gets the register page
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        role = request.form['role']
-        email = request.form['email']
         try:
+            username = request.form['username']
+            password = request.form['password']
+            role = request.form['role']
+            email = request.form['email']
             con = mysql.connect()  # set up database connection
             cur = con.cursor()
-        except:
-            con.rollback()
-        finally:
             cur.execute("SELECT * FROM user WHERE email=%s", email)
             rows = cur.fetchall()
-            if(len(rows)!=0):
+            if (len(rows) != 0):
                 return render_template("login.html", error="email already in use")
             cur.execute("SELECT * FROM user WHERE username=%s", username)
             rows = cur.fetchall()
@@ -71,27 +73,87 @@ def register():
                 return render_template("login.html", error="username already in use")
             con.commit()
 
-#create user object here
+            # create user object here
+
+
+
+            factory = UserFactory()
+
+            newUser = factory.get_user(role) # create the new user object here
+
+            newUser.set_username(username)
+            newUser.set_password(password)
+            newUser.set_email(email)
+            newUser.set_role(role)
+
+            #if a worker:
+            #   add more stuff (null manager stuffs in dB)
+            #if a manager:
+            #   add more stuff (null worker stuff in dB)
+
+
+
+
+
             cur.execute('INSERT INTO user (username, password, email, role)'
                         'VALUES( %s, %s, %s, %s)',
-                        (username, password, email, role))
+                        (newUser.get_username(), newUser.get_password(), newUser.get_email(), newUser.get_role()))
             con.commit()
-            return render_template("login.html")
+        except:
+            con.rollback()
+        finally:
+            print("All good")
+        return render_template("login.html")
     return render_template('register.html')
 
 @app.route('/createProject', methods=['GET', "POST"]) #gets the create project page / creates a new project
-def create_project():
-    if 'username' not in session: #if not logged in
+def createProject():
+    if 'userID' not in session: #if not logged in
         return render_template('login.html')
     if ("worker"):
         home()
     if request.method == 'POST':
-        return
-    return render_template('create_project.html')
+        try:
+            con = mysql.connect()  # set up database connection
+            cur = con.cursor()
+            name = request.form['name']
+            deadline = request.form['deadline']
+            description = request.form['description']
+            projectLeader = session['userID']
+
+
+            if(name=="" or deadline==""):
+                print("here")
+                date = datetime.date(datetime.today())
+                return render_template('create_project.html', date=date, error="Please give a name and a deadline")
+
+
+            newProject = Project()
+            newProject.set_project_leader(projectLeader)
+            newProject.set_name(name)
+            newProject.set_deadline(deadline)
+            newProject.set_description(description)
+            session['projects'].append(newProject)  # add to the project list
+
+
+
+            cur.execute('INSERT INTO project (name, deadline, description, projectLeader)'
+                        'VALUES( %s, %s, %s, %s)',
+                        (name, deadline, description, projectLeader))
+            con.commit()
+        except:
+            con.rollback()
+        finally:
+
+            con.close()
+        return redirect(url_for('home'))
+
+    date = datetime.date(datetime.today())
+    return render_template('create_project.html', date=date)
 
 @app.route('/createTask', methods=['GET', "POST"])  #gets the create task page / creates a new task
-def create_task():
-    if 'username' not in session: #if not logged in
+def createTask():
+    if 'userID' not in session: #if not logged in
         return render_template('login.html')
     if request.method == 'POST':
         return
@@ -99,20 +161,20 @@ def create_task():
 
 @app.route("/task", methods=['GET']) #gets a tasks details page
 def taskDetails():
-    if 'username' not in session: #if not logged in
+    if 'userID' not in session: #if not logged in
         return render_template('login.html')
     return render_template("manager_home.html", rows="rows")
 
 @app.route("/project", methods=['GET'])  #gets a projects details page
 def projectDetails():
-    if 'username' not in session: #if not logged in
+    if 'userID' not in session: #if not logged in
         return render_template('login.html')
     return render_template("manager_home.html", rows="rows")
 
 
 @app.route("/", methods=['GET']) #gets the home page
 def home():
-    if 'username' not in session: #if not logged in
+    if 'userID' not in session: #if not logged in
         return render_template('login.html')
     if session['role'] == "worker":
         return render_template('worker_home.html')
