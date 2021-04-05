@@ -23,7 +23,7 @@
     {% if error %}
     <p class=error><strong>Error:</strong> {{ error }}
     {% endif %}
-      <form name="form1" action = "{{ url_for('createTask') }}" method = "POST">
+      <form name="form1" action = "{{ url_for('createSubTask') }}" method = "POST">
          <br>
          Task name
          <input type = "text" name = "name" /><br><br>
@@ -34,7 +34,8 @@
          </textarea>
          <br>
           <input type="hidden" name="projectID" value="{{ projectID }}" />
-<!--          sends the project id in post request-->
+          <input type="hidden" name="parentTaskID" value="{{ parentTaskID }}" />
+<!--          sends the project id + parent task (if there is one) in post request-->
          <input type = "submit" value = "create task" />
       </form>
          </figure>

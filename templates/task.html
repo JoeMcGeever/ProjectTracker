@@ -3,23 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <title>Demo</title>
+    <link rel="stylesheet" href="./static/main.css">
 </head>
+<header>
+        <img src = "./static/images/logo.png">
+	</header>
+
+    <nav>
+		<ul>
+			<li><a href="/">Home</a></li>
+            {% if role == "manager" %}
+            <li><a href= "{{ url_for('createSubTask',id = projectID, parentTaskID = task._taskID)}}"> Create a Sub-Task</a></li>
+            {% endif %}
+			<li><a href="/logout" id="logout">Logout</a></li>
+		</ul>
+	</nav>
    <body>
-   <div align="center">
-   <br>
-      <a href = "\staff">
-      <button style="height:75px;width:500px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            Staff Dashboard</button></a>
-        <br><br>
-        <h1>Update Staff Profile</h1>
-      <form action = "{{ url_for('update') }}" method = "POST">
-         <br><br><br>
-          Username
-         <input type = "text" name = "username" /></br></br>
-          New Email
-         <input type = "text" name = "email" /></br></br>
-         <input type = "submit" value = "update" />
-      </form>
-    </div>
+   <main>
+
+ <div align="center">
+
+     {% if role == "manager" %}
+
+     <figure>
+           <h2>{{ task._name }}</h2>
+            {% if error %}
+                 <p class=error><strong>Error:</strong> {{ error }}
+            {% endif %}
+
+
+         {% if task._status=="reviewing" %}
+            <p> Status: {{ task._status }}</p>
+            <form name="form1" action = "{{ url_for('updateStatus') }}" method = "POST">
+                <input type="hidden"  name="status" value="completed" />
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                <input type = "submit" value = "Accept" />
+            </form>
+            <form name="form1" action = "{{ url_for('updateStatus') }}" method = "POST">
+                <input type="hidden"  name="status" value="assigned" />
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                <input type = "submit" value = "Reject" />
+            </form>
+         {% else %}
+            <p> Status: {{ task._status }}</p>
+         {% endif%}
+
+
+
+            <p>Deadline: {{ task._deadline }}</p>
+            <p>Description: {{ task._description }}</p>
+         <form name="form1" action = "{{ url_for('updateEffort') }}" method = "POST">
+            <p>Effort:
+                <input name="effort" value="{{ task._effort }}" />
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                <input type = "submit" value = "Update" />
+            </p>
+         </form>
+
+         {% if task._assignedUser == None %}
+         <form name="form1" action = "{{ url_for('assignUser') }}" method = "POST">
+            <p>Assigned:
+                <input name="userID" value="{{ task._assignedUser }}" />
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                <input type = "submit" value = "Update" />
+            </p>
+         </form>
+         {% else %}
+         <form name="form1" action = "{{ url_for('removeUser') }}" method = "POST">
+            <p>Assigned: {{task._assignedUser}}
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                <input type = "submit" value = "Un-assign" />
+            </p>
+         </form>
+         {% endif %}
+
+
+
+            <form name="form2" action = "{{ url_for('deleteTask') }}" method = "POST">
+                <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type = "submit" value = "Delete Task" />
+            </form>
+         </td>
+       </figure>
+
+     {% else %}
+     <figure>
+           <h2>{{ task._name }}</h2>
+            {% if task._status=="new" %}
+                 <form name="form1" action = "{{ url_for('updateStatus') }}" method = "POST">
+                    <p>Status: {{ task._status }}</p>
+                        <input type="hidden"  name="status" value="assigned" />
+                        <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                        <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                        <input type = "submit" value = "Assign to me" />
+                    </p>
+                 </form>
+            {% elif task._status=="assigned" %}
+                {% if task._assignedUser==userID %}
+                    <form name="form1" action = "{{ url_for('updateStatus') }}" method = "POST">
+                    <p>Status: {{ task._status }}</p>
+                        <input type="hidden"  name="status" value="reviewing" />
+                        <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                        <input type="hidden"  name="taskID" value="{{ task._taskID }}" />
+                        <input type = "submit" value = "Completed?" />
+                    </p>
+                 </form>
+                {% else %}
+                    <p>Status: {{ task._status }}</p>
+                {% endif  %}
+
+            {% else %}
+         <p>Status: {{ task._status }}</p>
+            {% endif  %}
+
+
+            <p>Deadline: {{ task._deadline }}</p>
+            <p>Description: {{ task._description }}</p>
+            <p>Effort: {{ task._effort }}</p>
+            <p>Assigned User: {{ task._assignedUser }}</p>
+       </figure>
+     {% endif %}
+
+
+       <h2> Sub Tasks:</h2>
+
+       <table border = "1" cellpadding = "5" cellspacing = "5">
+     <thead>
+        <td>Name</td>
+        <td>Status</td>
+        <td>Effort</td>
+        <td>Details</td>
+     </thead>
+     {% for subtask in task._miniTasks %}
+        <tr>
+            <td> {{ subtask._name }} </td>
+            <td> {{ subtask._status }} </td>
+            <td> {{ subtask._effort }} </td>
+            <td>
+                <a href="{{ url_for('taskDetails', taskID = subtask._taskID, projectID=projectID)}}"><button> View Task </button></a>
+            </td>
+        </tr>
+     {% endfor %}
+    </table>
+
+       </div>
+
+
+
+
+
+
+</main>
    </body>
 </html>

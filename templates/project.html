@@ -3,23 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Demo</title>
+    <link rel="stylesheet" href="./static/main.css">
 </head>
-   <body>
-   <div align="center">
-   <br>
-      <a href = "\staff">
-      <button style="height:75px;width:500px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            Staff Dashboard</button></a>
-        <br><br>
-        <h1>Update Staff Profile</h1>
-      <form action = "{{ url_for('update') }}" method = "POST">
-         <br><br><br>
-          Username
-         <input type = "text" name = "username" /></br></br>
-          New Email
-         <input type = "text" name = "email" /></br></br>
-         <input type = "submit" value = "update" />
-      </form>
-    </div>
+<body>
+<header>
+        <img src = "./static/images/logo.png">
+	</header>
+
+    <nav>
+		<ul>
+			<li><a href="/">Home</a></li>
+            <li><a href= "{{ url_for('createTask',id = projectID)}}"> Create a Task</a></li>
+			<li><a href="/logout" id="logout">Logout</a></li>
+		</ul>
+	</nav>
+<br>
+<h1> Project </h1>
+{% if error %}
+    <p class=error><strong>Error:</strong> {{ error }}
+    {% endif %}
+    {% if role == "manager" %}
+        <form name="form1" action = "{{ url_for('deleteProject') }}" method = "POST">
+                <input type="hidden"  name="projectID" value="{{ projectID }}" />
+                <input type = "submit" value = "Delete Project" />
+        </form>
+    {% endif %}
+<main>
+
+       {% if error %}
+    <p class=error><strong>Error:</strong> {{ error }}
+    {% endif %}
+
+
+     {% for row in project %}
+        
+            <p>
+    <a href = "{{ url_for('taskDetails', projectID = projectID, taskID = row._taskID)}}">
+            <figure>
+            Name: {{ row._name }}<br>
+            Status: {{ row._status }}<br>
+            Deadline: {{ row._deadline }}<br><br>
+                Sub-tasks:<br>
+            {% for child in row._miniTasks %}
+                Name: {{ child._name }}<br>
+                Status: {{ child._status }}<br><br>
+            {% endfor %}
+            </figure>
+    </a>
+    </p>
+
+
+     {% endfor %}
+
+
+</main>
    </body>
 </html>

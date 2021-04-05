@@ -5,13 +5,26 @@
 
 class Task:
 
+    _taskID=""
+    _name=""
+    _effort=""
+    _status=""
+    _description = ""
+    _deadine =""
+    _assignedUser = 0
+    _miniTasks =[]
+
+
+
     def __init__(self):
         super().__init__()
+        self._taskID = None
         self._name = ""
-        self._effort = ""
+        self._effort = 0
+        self._status= "new"
         self._description = ""
         self._deadline = None
-        self._assignedUser = ""
+        self._assignedUser = None
         self._miniTasks = []  # composite pattern
 
     # composite pattern##
@@ -19,9 +32,16 @@ class Task:
         return self._miniTasks
 
     def add_child_task(self, child):
-        self._miniTasks.append(child)
+        if child is not None:
+            self._miniTasks.append(child)
 
     ####################
+
+    def set_taskID(self, taskID):
+        self._taskID = taskID
+
+    def get_taskID(self):
+        return self._taskID
 
     def get_name(self):
         return self._name
@@ -34,6 +54,12 @@ class Task:
 
     def set_effort(self, effort):
         self._effort = effort
+
+    def get_status(self):
+        return self._status
+
+    def set_status(self, status):
+        self._status = status
 
     def get_description(self):
         return self._description

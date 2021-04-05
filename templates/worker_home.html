@@ -3,54 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Demo</title>
+    <link rel="stylesheet" href="./static/main.css">
 </head>
 <body>
-    <br><br>
-    <div align="center">
-    <h1> Worker Home</h1>
-    <br><br>
-    <table border = "0" cellpadding = "10" cellspacing = "10">
-        <tr>
-        <td>
-            <a href = "\enternewmanager">
-            <button style="height:75px;width:150px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            New Manager</button></a>
-        </td>
-        <td>
-            <a href = "\enternewadvisor">
-            <button style="height:75px;width:150px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            New Advisor</button></a>
-        </td>
-        <td>
-            <a href = "\updatenew">
-            <button style="height:75px;width:150px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E">
-            Update Staff</button></a>
-        </td>
-        <td>
-            <a href = "\remove">
-            <button style="height:75px;width:150px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            Delete Staff</button></a>
-        </td>
-        </tr>
-    </table><br><br><br>
-    <table border = "1" cellpadding = "5" cellspacing = "5">
-     <thead>
-        <td>Username</td>
-        <td>Email</td>
-        <td>Start Year</td>
-        <td>Role</td>
-        <td>Profile</td>
-        <td>Project</td>
-        <td>Contract Pay</td>
-     </thead>
-     {% for row in rows %}
-        <tr>
-           {% for data in row %}
-              <td>{{ data }}</td>
-           {% endfor %}
-        </tr>
+    <header>
+        <img src = "./static/images/logo.png">
+	</header>
+
+    <nav>
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li><a href="/logout" id="logout">Logout</a></li>
+		</ul>
+	</nav>
+    <br>
+    <h1> Worker Projects</h1>
+<main>
+
+
+
+{% for project in data %}
+
+    <a href = "{{ url_for('project',id = project[0])}}">
+    <figure>
+        <h2>{{ project[1] }}</h2>
+        <p>Deadline: {{ project[2] }}</p>
+        <p>Project leader: {{ project[5] }}</p>
+    </figure>
+        </a>
      {% endfor %}
-    </table>
-    </div>
-</body>
+
+
+</main>
+   </body>
 </html>

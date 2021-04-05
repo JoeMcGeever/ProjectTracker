@@ -3,13 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <title>Demo</title>
+    <link rel="stylesheet" href="./static/main.css">
 </head>
 <body>
-    <br><br>
-    <h1> Manager Home</h1>
 
-<a href = "\createProject">
-      <button style="height:75px;width:500px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            Create a project</button></a>
-</body>
+<header>
+        <img src = "./static/images/logo.png">
+	</header>
+
+    <nav>
+		<ul>
+			<li><a href="/">Home</a></li>
+            <li><a href="/createProject">Create a Project</a></li>
+			<li><a href="/logout" id="logout">Logout</a></li>
+		</ul>
+	</nav>
+
+
+<br>
+    <h1> Project Page</h1>
+
+<main>
+
+
+
+{% for project in data %}
+
+    <a href = "{{ url_for('project',id = project[0])}}">
+    <figure>
+        <h2>{{ project[1] }}</h2>
+        <p>Deadline: {{ project[2] }}</p>
+        <p>Project leader: {{ project[5] }}</p>
+    </figure>
+        </a>
+     {% endfor %}
+
+</main>
+   </body>
 </html>

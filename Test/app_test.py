@@ -1,6 +1,7 @@
 import unittest
 from app import app
 from flaskext.mysql import MySQL
+from flask import session
 
 
 class TestCaseExamples(unittest.TestCase):
@@ -25,7 +26,12 @@ class TestCaseExamples(unittest.TestCase):
         mysql.connect()
         con = mysql.connect()
         cur = con.cursor()
+        cur.execute('DELETE FROM task')
+        cur.execute('DELETE FROM project')
         cur.execute('DELETE FROM user')
+        cur.execute('ALTER TABLE task AUTO_INCREMENT=1')
+        cur.execute('ALTER TABLE project AUTO_INCREMENT=1')
+        cur.execute('ALTER TABLE user AUTO_INCREMENT=1')
         con.commit()
         pass
 
@@ -66,6 +72,17 @@ class TestCaseExamples(unittest.TestCase):
         self.assertTrue(b'Invalid login details' in response.data)
 
 
+    def test_post_create_task(self):
+        self.register('testUser', 'testEmail@email.com', 'testPassword', "manager")
+        self.createProject('test project','2021-05-03', 'a test project')
+        response = self.createTask('test task', '2021-05-03','a test task')
+        print(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(b'Create a task' in response.data)
+
+
+
+
         # helper methods
     def register(self, username, email, password, role):
         tester = app.test_client(self)
@@ -87,6 +104,28 @@ class TestCaseExamples(unittest.TestCase):
         tester = app.test_client(self)
         return tester.get(
             '/logout',
+            follow_redirects=True
+        )
+
+    def createProject(self, name, deadline, description):
+        tester = app.test_client(self)
+        with tester.session_transaction() as lSess:
+                lSess['userID'] = 1
+                lSess['role'] = 'manager'
+        return tester.post(
+            '/createProject',
+            data=dict(name=name, deadline=deadline, description=description),
+            follow_redirects=True
+        )
+
+    def createTask(self, name, deadline, description):
+        tester = app.test_client(self)
+        with tester.session_transaction() as lSess:
+            lSess['userID'] = 1
+            lSess['role'] = 'manager'
+        return tester.post(
+            '/createTask',
+            data=dict(name=name, deadline=deadline, description=description, projectID=1),
             follow_redirects=True
         )
 

@@ -3,21 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Demo</title>
+   <link rel="stylesheet" href="./static/main.css">
 </head>
-   <body>
-   <br>
-   <div align="center">
-      <a href = "\">
-      <button style="height:75px;width:500px; background-color: #B3B6B7 ; border-color: #B3B6B7; color: #34495E" >
-            Home</button></a>
+<body>
+
+<header>
+        <img src = "./static/images/logo.png">
+	</header>
+
+    <nav>
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li><a href="/logout" id="logout">Logout</a></li>
+		</ul>
+	</nav>
+
+
+
+<main>
+
+      <figure>
       <form name="form1" action = "{{ url_for('createProject') }}" method = "POST">
          {% if error %}
          <p class=error><strong>Error:</strong> {{ error }}
          {% endif %}
-         <br><br>
-         <h1>New Project</h1>
-         <br><br><br>
-         Project Name
+         <br>
+         Project Name<br>
          <input type = "text" name = "name" /><br><br>
          Description<br>
          <textarea name="description" rows="4" cols="50"/>
@@ -28,6 +39,7 @@
 
          <input type = "submit" value = "create project" />
       </form>
-   </div>
+      </figure>
+</main>
    </body>
 </html>
