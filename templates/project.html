@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Demo</title>
+    <title>Project Details</title>
     <link rel="stylesheet" href="./static/main.css">
 </head>
 <body>
@@ -36,7 +36,7 @@
 
 
      {% for row in project %}
-        
+
             <p>
     <a href = "{{ url_for('taskDetails', projectID = projectID, taskID = row._taskID)}}">
             <figure>

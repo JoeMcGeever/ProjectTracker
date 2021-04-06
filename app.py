@@ -7,10 +7,8 @@ from datetime import datetime
 from assignedState import AssignedState
 from completedState import CompletedState
 from newState import NewState
-from project import Project
 from reviewingState import ReviewingState
 from task import Task
-# from dataSort import sortTasks
 from userFactory import UserFactory
 
 mysql = MySQL()
@@ -500,7 +498,7 @@ def deleteTask(): #DELETE request for managers to remove a task from a project
         con.close()
 
 
-    return redirect(url_for('project', projectID=projectID ))  # route to project page
+    return redirect(url_for('project', id=projectID ))  # route to project page
 
 @app.route('/deleteProject', methods=['POST','DELETE'])
 def deleteProject(): #DELETE request for managers to remove a task from a project
@@ -523,7 +521,7 @@ def deleteProject(): #DELETE request for managers to remove a task from a projec
         con.commit()
         con.close()
 
-    return redirect(url_for('project', projectID=projectID))  # route to task details page
+    return redirect(url_for('home'))  # route to task details page
 
 @app.route('/updateStatus', methods=['POST', 'PATCH'])
 def updateStatus(): #patch request for users to update the status of a task
@@ -617,21 +615,20 @@ def updateEffort(): #patch request for managers to update the relative effort of
     projectID = request.form['projectID']
     taskID = request.form['taskID']
 
+
     if 'userID' not in session:  # if not logged in
         return render_template('login.html')
     if session['role'] == "worker":
         return render_template('worker_home.html')
-
     try:
         con = mysql.connect()  # set up database connection
         cur = con.cursor()
-        cur.execute("UPDATE task SET effort=%s WHERE taskID=%s",effort, taskID)
+        cur.execute("UPDATE task SET effort=%s WHERE taskID=%s", (effort, taskID))
     except:
         con.rollback()
     finally:
         con.commit()
         con.close()
-
 
     return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID ))  # route to task details page
 
