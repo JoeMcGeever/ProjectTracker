@@ -10,6 +10,9 @@ from newState import NewState
 from reviewingState import ReviewingState
 from task import Task
 from userFactory import UserFactory
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 mysql = MySQL()
 
@@ -445,7 +448,9 @@ def assignUser(): #post request for managers to assign users to a project
         cur = con.cursor()
         cur.execute("UPDATE task SET assignedUserID=%s WHERE taskID=%s", (userID, taskID))
         cur.execute("UPDATE task SET status='assigned' WHERE taskID=%s", taskID)
+        sendEmail(userID, "A new task has been assigned to you, please log in to see the information.", "A new task has been assigned to you")
     except:
+        print("Error in assigning a user")
         return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID, error="No user with id: " + str(userID)))
         con.rollback()
 
@@ -465,8 +470,14 @@ def removeUser(): #PATCH request for managers to remove users from a project
     try:
         con = mysql.connect()  # set up database connection
         cur = con.cursor()
-        cur.execute("UPDATE task SET assignedUserID=NULL WHERE taskID=%s", taskID)
+        cur.execute("SELECT assignedUserID, name FROM task WHERE taskID=%s", taskID)
+        result = cur.fetchone()
+        userID = result[0]
+        taskName = result[1]
+        cur.execute("UPDATE task SET assignedUserID=NULL, status='new' WHERE taskID=%s", taskID)
+        sendEmail(userID, "You have been un-assigned to the task: " + taskName, taskName)
     except:
+        print("Error in removing user")
         return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID))
         con.rollback()
 
@@ -575,22 +586,56 @@ def updateStatus(): #patch request for users to update the status of a task
 
     #status is updated in the State Go4 pattern (after some validation to ensure the status change is legal to the functionality requirements)
 
+
+    taskName = task.get_name()
+
     if status == "assigned":
+        #send email as the reviewing task is rejected
+        reciever = task.get_assigned_user()
+        message = "The reviewing task '" + taskName + "', has been rejected."
+
+
         progress_state = AssignedState()  # set the state function
         updatedStatus = progress_state.validate_status(task, userID, role) # set the status by sending to validation
+
     elif status == "reviewing":
+
+        try:
+            con = mysql.connect()  # set up database connection
+            cur = con.cursor()
+            cur.execute("SELECT projectLeader FROM project WHERE projectID=%s", projectID)
+            reciever = cur.fetchone() #get the reciever
+        except:
+            reciever = 0
+            con.rollback()
+        finally:
+            con.commit()
+            con.close()
+
+
+        message = "The task: '" + taskName +"' has been set to completed. Log in to accept / reject the task."
         progress_state = ReviewingState()
         updatedStatus = progress_state.validate_status(task, userID, role)
+
     elif status == "completed":
         progress_state = CompletedState()
         updatedStatus = progress_state.validate_status(task, userID, role)
     else:
+        #send unassigned email
+        reciever = task.get_assigned_user()
+        message = "You are no longer assigned to the task: '" + task.get_name()
+
         progress_state = NewState()
         updatedStatus = progress_state.validate_status(task, userID, role)
 
 
+
     if updatedStatus != status: # if the updatedStatus is not the same as status sent, return the taskDetails page with the error
         return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID, error=updatedStatus)) # updatedStatus is set to an error message if not the status
+
+    if(status != "completed"):
+        sendEmail(reciever, message, taskName) # call the email sending function
+
 
     try:
         con = mysql.connect()  # set up database connection
@@ -601,10 +646,10 @@ def updateStatus(): #patch request for users to update the status of a task
         cur.execute("UPDATE task SET status=%s WHERE taskID=%s", (updatedStatus, taskID))
         return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID,
                                 error="Error updating status"))
-
     finally:
         con.commit()
         con.close()
+
 
     return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID))  # route to task details page
 
@@ -633,6 +678,36 @@ def updateEffort(): #patch request for managers to update the relative effort of
     return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID ))  # route to task details page
 
 
+def sendEmail(reciever, message, taskName):
+
+    try:
+        con = mysql.connect()  # set up database connection
+        cur = con.cursor()
+        cur.execute("SELECT email FROM user WHERE userID=%s", reciever)
+        emailAddress = cur.fetchone()[0]  # get the reciever
+    except:
+        emailAddress = "josephmcgeever23@gmail.com" # all fail emails go here
+        con.rollback()
+    finally:
+        con.commit()
+        con.close()
+
+
+    print("sending email to: " + emailAddress)
+    message = Mail(
+        from_email='josephmcgeever@hotmail.co.uk',
+        to_emails=emailAddress,
+        subject='Updated: ' + taskName,
+        html_content=message)
+    try:
+        # sg = SendGridAPIClient(os.environ.get('sendgrid_api_key'))
+        sg = SendGridAPIClient('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')
+        response = sg.send(message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(e.body)
 
 
 if __name__ == "__main__":
