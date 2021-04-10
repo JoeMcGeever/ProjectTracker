@@ -115,7 +115,7 @@ class TestCaseExamples(unittest.TestCase):
         response = self.removeUser(1, 1) # unassign the user in task id 1
         self.assertTrue(b'Assigned:\n' in response.data)  # ensure the assigned user field is empty
         self.assertFalse(b'Assigned: 2' in response.data)  # ensure the assigned user is not id 2
-        self.assertFalse(b'Status: new' in response.data)  # ensure the status is set to "new" again
+        self.assertTrue(b'Status: new' in response.data)  # ensure the status is set to "new" again
 
 
 
@@ -144,9 +144,12 @@ class TestCaseExamples(unittest.TestCase):
         self.createProject('test project', '2021-05-03', 'a test project')
         self.createTask('test task', '2021-05-03', 'a test task')
         response = self.taskDetails(1, 1, 1) # get newly created task
-        self.assertTrue(b'<input name="effort" value="0" />' in response.data) # check to see if effort is 0
-        response = self.updateEffort(1, 1, 8) #update the task with id 1 in project id 1, to have an effort of 8
-        self.assertTrue(b'<input name="effort" value="8" />' in response.data) # check to see if effort is 8
+        self.assertTrue(b'<input name="effort" value="0" />' in response.data)
+        # check to see if effort is 0
+        response = self.updateEffort(1, 1, 8)
+        #update the task with id 1 in project id 1, to have an effort of 8
+        self.assertTrue(b'<input name="effort" value="8" />' in response.data)
+        # check to see if effort is 8
 
 
     def test_update_status_newToAssigned_manager(self):
@@ -208,9 +211,11 @@ class TestCaseExamples(unittest.TestCase):
         self.assignUser(1, 1, 2)  # assign the user to a task so they can view the project
         self.updateStatus("reviewing", 1, 1, 'worker')  # set the status of the event as 'reviewing'
         response = self.taskDetails(1, 1, 1)  # view the task as the manager
-        self.assertTrue(b'<input type = "submit" value = "Accept" />' in response.data)  # test if the manager can accept the reviewing task
+        self.assertTrue(b'<input type = "submit" value = "Accept" />' in response.data)
+        # test if the manager can accept the reviewing task
         self.assertTrue(
-            b'<input type = "submit" value = "Reject" />' in response.data)  # test if the manager can reject the reviewing task
+            # test if the manager can reject the reviewing task
+            b'<input type = "submit" value = "Reject" />' in response.data)
         response = self.updateStatus("assigned", 1, 1, 'manager')
         print(response.data)
         self.assertTrue(b'Status: assigned' in response.data)
@@ -319,6 +324,21 @@ class TestCaseExamples(unittest.TestCase):
             follow_redirects=True
         )
 
+    def updateStatus(self, status, projectID, taskID, role):
+        tester = app.test_client(self)
+        if(role=="worker"):
+            userID = 2
+        else:
+            userID = 1
+        with tester.session_transaction() as lSess:
+            lSess['userID'] = userID
+            lSess['role'] = role
+        return tester.post(
+            '/updateStatus',
+            data=dict(projectID=projectID, taskID=taskID, status=status),
+            follow_redirects=True
+        )
+
     def updateEffort(self, projectID, taskID, effort):
         tester = app.test_client(self)
         with tester.session_transaction() as lSess:
@@ -365,20 +385,7 @@ class TestCaseExamples(unittest.TestCase):
         )
 
 
-    def updateStatus(self, status, projectID, taskID, role):
-        tester = app.test_client(self)
-        if(role=="worker"):
-            userID = 2
-        else:
-            userID = 1
-        with tester.session_transaction() as lSess:
-            lSess['userID'] = userID
-            lSess['role'] = role
-        return tester.post(
-            '/updateStatus',
-            data=dict(projectID=projectID, taskID=taskID, status=status),
-            follow_redirects=True
-        )
+
 
 
 

@@ -1,5 +1,5 @@
 """ This is the entity, Project"""
-
+from task import Task
 
 class Project:
 
@@ -25,8 +25,11 @@ class Project:
 
     def get_tasks(self):
         return self._tasks
+    
 
     def add_task(self, task):
+        taskToAdd = Task()
+        print(taskToAdd.set_taskID())
         self._tasks.append(task)
 
     def get_project_leader(self):

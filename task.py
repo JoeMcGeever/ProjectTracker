@@ -1,4 +1,5 @@
 # apply composite pattern here - where tasks can have mini tasks beneath it (related tasks)
+from state import State
 
 """ This is the entity, Task"""
 
@@ -28,12 +29,19 @@ class Task:
         self._miniTasks = []  # composite pattern
 
     # composite pattern##
+
     def get_child_tasks(self):
         return self._miniTasks
 
     def add_child_task(self, child):
         if child is not None:
             self._miniTasks.append(child)
+
+    def get_sub_taskIDs(self):
+        taskIDs =[]
+        for task in self._miniTasks:
+            taskIDs.append(task.get_taskID())
+        return taskIDs
 
     ####################
 

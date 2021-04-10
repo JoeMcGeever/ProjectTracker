@@ -1,5 +1,3 @@
-#apply factory pattern here:
-
 """ UserFactory"""
 from manager import Manager
 from worker import Worker

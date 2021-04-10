@@ -8,8 +8,6 @@ class Manager(User):
         super().__init__()
         self._projects = []
 
-    def get_projects(self):
-        return self._projects
 
     def set_projects(self, list):
         self._projects = list

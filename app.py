@@ -80,9 +80,6 @@ def register():
                 return render_template("login.html", error="username already in use")
             con.commit()
 
-            # create user object here
-
-
 
             factory = UserFactory()
 
@@ -92,15 +89,6 @@ def register():
             newUser.set_password(password)
             newUser.set_email(email)
             newUser.set_role(role)
-
-            #if a worker:
-            #   add more stuff (null manager stuffs in dB)
-            #if a manager:
-            #   add more stuff (null worker stuff in dB)
-
-
-
-
 
             cur.execute('INSERT INTO user (username, password, email, role)'
                         'VALUES( %s, %s, %s, %s)',
@@ -206,9 +194,7 @@ def createTask():
 @app.route('/createSubTask', methods=['GET', "POST"])  #gets the create task page / creates a new task
 def createSubTask():
     projectID = request.args.get('id', None)
-    print(projectID)
     parentTaskID = request.args.get('parentTaskID', None)
-    print(parentTaskID)
     if 'userID' not in session:  # if not logged in, or no parent projectID is given
         print("NO USERID")
         return render_template('login.html')
@@ -219,8 +205,6 @@ def createSubTask():
     elif request.method == "POST":
         projectID = request.form['projectID']  # otherwise, the projectID is send in the request form
         parentTaskID = request.form['parentTaskID']
-        print(projectID)
-        print(parentTaskID)
     # get the project details
     try:
         con = mysql.connect()  # set up database connection
@@ -246,17 +230,13 @@ def createSubTask():
         try:
             con = mysql.connect()  # set up database connection
             cur = con.cursor()
-            print(parentTaskID)
-            print("WE ARE HERE")
             cur.execute('INSERT INTO task (name, deadline, description, projectID, parentTask)'
                         'VALUES( %s, %s, %s, %s, %s)',
                         (name, deadline, description, projectID, parentTaskID))
             idOfTaskCreated = cur.lastrowid  # get the id of the last created object in cur
-            print("Success adding to task dB, with latest task having an ID of: " + str(idOfTaskCreated))
             cur.execute('INSERT INTO children_tasks (parentTaskID, taskID)'
                         'VALUES( %s, %s)',
                         (parentTaskID, idOfTaskCreated))
-            print("Success adding to relationship table")
             con.commit()
         except:
             con.rollback()
@@ -342,10 +322,8 @@ def project():
     return render_template("project.html", project=projectTasks, projectID=projectID, role=role)
 
 def sortTasks(data): #data parameter - the sql returned from collecting all of the parent tasks for the projects.
-    project = []#list of projects
+    project = []#list of tasks
     for task in data:
-        print("Sorting:")
-        print(task)
         taskInstance = Task() # create the task instance
         taskInstance.set_taskID(task[0])
         taskInstance.set_name(task[1])
@@ -354,11 +332,9 @@ def sortTasks(data): #data parameter - the sql returned from collecting all of t
         taskInstance.set_deadline(task[4])
         taskInstance.set_description(task[5])
         taskInstance.set_assigned_user(task[8])
-
         for childToAdd in getChildren(taskInstance.get_taskID()):
-            taskInstance.add_child_task(childToAdd)
+            taskInstance.add_child_task(childToAdd) # composite pattern
         # call the recursive function to populate the task hierarchy
-
         project.append(taskInstance)
     return project # sorts the data into the
 
@@ -367,15 +343,14 @@ def getChildren(id): # returns a task from its id
     try:
         con = mysql.connect()  # set up database connection
         cur = con.cursor()
-        cur.execute(("SELECT * FROM task WHERE taskID IN (SELECT taskID FROM children_tasks WHERE parentTaskID=%s)"),id)
+        cur.execute(("SELECT * FROM task WHERE taskID IN"
+                     " (SELECT taskID FROM children_tasks WHERE parentTaskID=%s)"),id)
         data = cur.fetchall()
     except:
-        print("ERROR IN SQL")
         con.rollback()
     finally:
         con.commit()
         con.close()
-
     for task in data:
         taskInstance = Task()  # create the task instance
         taskInstance.set_taskID(task[0])
@@ -584,7 +559,8 @@ def updateStatus(): #patch request for users to update the status of a task
 
     task.set_status(taskSQL[3])
 
-    #status is updated in the State Go4 pattern (after some validation to ensure the status change is legal to the functionality requirements)
+    #status is updated in the State Go4 pattern
+    # #(after some validation to ensure the status change is legal to the functionality requirements)
 
 
     taskName = task.get_name()
@@ -593,13 +569,10 @@ def updateStatus(): #patch request for users to update the status of a task
         #send email as the reviewing task is rejected
         reciever = task.get_assigned_user()
         message = "The reviewing task '" + taskName + "', has been rejected."
-
-
         progress_state = AssignedState()  # set the state function
-        updatedStatus = progress_state.validate_status(task, userID, role) # set the status by sending to validation
-
+        updatedStatus = progress_state.validate_status(task, userID, role)
+        # set the status by sending to validation
     elif status == "reviewing":
-
         try:
             con = mysql.connect()  # set up database connection
             cur = con.cursor()
@@ -611,12 +584,9 @@ def updateStatus(): #patch request for users to update the status of a task
         finally:
             con.commit()
             con.close()
-
-
         message = "The task: '" + taskName +"' has been set to completed. Log in to accept / reject the task."
         progress_state = ReviewingState()
         updatedStatus = progress_state.validate_status(task, userID, role)
-
     elif status == "completed":
         progress_state = CompletedState()
         updatedStatus = progress_state.validate_status(task, userID, role)
@@ -624,14 +594,15 @@ def updateStatus(): #patch request for users to update the status of a task
         #send unassigned email
         reciever = task.get_assigned_user()
         message = "You are no longer assigned to the task: '" + task.get_name()
-
         progress_state = NewState()
         updatedStatus = progress_state.validate_status(task, userID, role)
 
 
 
-    if updatedStatus != status: # if the updatedStatus is not the same as status sent, return the taskDetails page with the error
-        return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID, error=updatedStatus)) # updatedStatus is set to an error message if not the status
+    if updatedStatus != status:
+        # if the updatedStatus is not the same as status sent, return the taskDetails page with the error
+        return redirect(url_for('taskDetails', projectID=projectID, taskID=taskID, error=updatedStatus))
+        # updatedStatus is set to an error message if not the status
 
     if(status != "completed"):
         sendEmail(reciever, message, taskName) # call the email sending function
@@ -679,29 +650,27 @@ def updateEffort(): #patch request for managers to update the relative effort of
 
 
 def sendEmail(reciever, message, taskName):
-
     try:
         con = mysql.connect()  # set up database connection
         cur = con.cursor()
         cur.execute("SELECT email FROM user WHERE userID=%s", reciever)
-        emailAddress = cur.fetchone()[0]  # get the reciever
+        #print("Email with user ID: " + str(reciever) + ". Has SQL results of: " + str(cur.fetchone()))
+        for row in cur.fetchone():
+            emailAddress = row
+        print(emailAddress)
     except:
         emailAddress = "josephmcgeever23@gmail.com" # all fail emails go here
         con.rollback()
     finally:
         con.commit()
         con.close()
-
-
-    print("sending email to: " + emailAddress)
     message = Mail(
         from_email='josephmcgeever@hotmail.co.uk',
         to_emails=emailAddress,
         subject='Updated: ' + taskName,
         html_content=message)
     try:
-        # sg = SendGridAPIClient(os.environ.get('sendgrid_api_key'))
-        sg = SendGridAPIClient('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')
+        sg = SendGridAPIClient(os.environ.get('sendgrid_api_key'))
         response = sg.send(message)
         print(response.status_code)
         print(response.body)

@@ -1,4 +1,5 @@
 """ This is the entity, User"""
+from project import Project
 
 class User:
 
@@ -7,6 +8,7 @@ class User:
         self.__email = ""
         self.__password = ""
         self.__role = ""
+        self.__projects = []
 
     def get_username(self):  # get method
         return self.__username
@@ -23,8 +25,13 @@ class User:
     def get_password(self):  # get method
         return self.__password
 
+
+    def get_projects(self):
+        return self._projects
+
+
+
     def set_password(self, password):  # set method
-        #encrypt here
         self.__password = password
 
     def get_role(self):  # get method
